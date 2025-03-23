@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 
 class LoginView(ObtainAuthToken):
+    
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -24,11 +25,18 @@ class LoginView(ObtainAuthToken):
         return Response({"error": "Invalid credentials"}, status=400)
     
 class ArticleListCreateView(generics.ListCreateAPIView):
-    queryset = Article.objects.all()
+    
     serializer_class = ArticleSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        queryset = Article.objects.all()
+        if self.request.method == "GET":
+            queryset = queryset.order_by("-created_at")  # Sort by created_at descending
+        return queryset
+
 class ArticleRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = [IsAuthenticated]
@@ -53,16 +61,18 @@ class ArticleRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class CustomPagination(PageNumberPagination):
+    
     page_size = 10  # Adjust as needed
     page_size_query_param = 'page_size'
     max_page_size = 100
 
 class dataList(APIView):
+    
     pagination_class = CustomPagination
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        articles = Article.objects.all().order_by('created_at')  # Sorting by created_at descending
+        articles = Article.objects.all().order_by('-created_at')  # Sorting by created_at descending
         paginator = self.pagination_class()
         result_page = paginator.paginate_queryset(articles, request)
         serializer = ArticleSerializer(result_page, many=True)
