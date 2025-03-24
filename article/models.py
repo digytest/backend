@@ -30,7 +30,7 @@ class Article(models.Model):
 @receiver(post_save, sender=Article)
 def update_category_image_url(sender, instance, created, **kwargs):
     """ Update category_image_url only when the article is newly created or the category changes """
-    if created and instance.category_id:
+    if instance.category_id:
         category_image = instance.category_id.image_url
         if category_image and instance.category_image_url != category_image:
             Article.objects.filter(id=instance.id).update(category_image_url=category_image)
