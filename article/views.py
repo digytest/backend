@@ -12,6 +12,7 @@ from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.utils.timesince import timesince
 class LoginView(ObtainAuthToken):
     
     permission_classes = [AllowAny]
@@ -33,8 +34,21 @@ class ArticleListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         queryset = Article.objects.all()
         if self.request.method == "GET":
-            queryset = queryset.order_by("-created_at")  # Sort by created_at descending
-        return queryset
+            queryset = queryset.order_by("-created_at") 
+
+            data = [
+            {
+                "id": article.id,
+                "title": article.title,
+                "link": article.link,
+                "category_image_url": article.category_image_url,
+                "category_id": article.category_id,
+                "created_at": timesince(article.created_at) + " ago",
+            }
+            for article in queryset
+        ]
+             # Sort by created_at descending
+        return data
 
 class ArticleRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     
@@ -74,8 +88,21 @@ class dataList(APIView):
 
     def get(self, request, *args, **kwargs):
         articles = Article.objects.all().order_by('-created_at')  # Sorting by created_at descending
+        
+        data = [
+            {
+                "id": article.id,
+                "title": article.title,
+                "link": article.link,
+                "category_image_url": article.category_image_url,
+                "category_id": article.category_id,
+                "created_at": timesince(article.created_at) + " ago",
+            }
+            for article in articles
+        ]
+
         paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(articles, request)
+        result_page = paginator.paginate_queryset(data, request)
         serializer = ArticleSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
     
